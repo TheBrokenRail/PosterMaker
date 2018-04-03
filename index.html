@@ -1,0 +1,84 @@
+<input id="picker" type="file" style="height: 4%;"></input><br />
+<textarea id="text" style="height: 10%; width: 100%; resize: none;">
+<p style="text-align: center;">Hello</p>
+</textarea>
+<iframe id="image" style="border: none; display: none;"></iframe>
+<img id="output" style="display: block;"></img>
+<script>
+  var HEIGHT = 11;
+  var WIDTH = 8.5;
+
+  function update(file) {
+    var div = document.getElementById('image').contentDocument.body;
+    div.innerHTML = '';
+    var img = document.createElement('IMG');
+    img.style.objectFit = 'cover';
+    img.style.overflow = 'hidden';
+    var reader = new FileReader();
+    reader.addEventListener("load", function() {
+      img.src = reader.result;
+    }, false);
+    if (file) {
+      reader.readAsDataURL(file);
+    }
+    var newDiv = document.createElement('DIV');
+    newDiv.style.overflow = 'hidden';
+    newDiv.appendChild(img);
+    div.appendChild(newDiv);
+    img.onload = function() {
+      newDiv.style.position = 'absolute';
+      newDiv.style.top = 0;
+      newDiv.style.left = 0;
+      newDiv.style.width = img.naturalHeight * (WIDTH / HEIGHT);
+      newDiv.style.height = img.naturalHeight;
+      img.style.filter = 'blur(8px)';
+      img.style.transform = 'scale(1.1)';
+      var textDiv = document.createElement('DIV');
+      textDiv.style.position = 'absolute';
+      textDiv.style.top = 0;
+      textDiv.style.left = 0;
+      textDiv.style.height = img.naturalHeight;
+      textDiv.style.width = img.naturalHeight * (WIDTH / HEIGHT);
+      textDiv.style.color = 'white';
+      textDiv.style.fontSize = '36px';
+      textDiv.style.fontFamily = 'sans-serif';
+      textDiv.style.zIndex = 9999;
+      textDiv.innerHTML = document.getElementById('text').value;
+      div.appendChild(textDiv);
+      var output = document.createElement('IMG');
+      output.style.width = img.naturalHeight * (WIDTH / HEIGHT);
+      output.style.height = img.naturalHeight;
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('height', img.naturalHeight);
+      svg.setAttribute('width', img.naturalHeight * (WIDTH / HEIGHT));
+      var obj = document.createElementNS("http://www.w3.org/2000/svg", 'foreignObject');
+      obj.innerHTML = div.innerHTML;
+      obj.setAttribute('height', img.naturalHeight);
+      obj.setAttribute('width', img.naturalHeight * (WIDTH / HEIGHT));
+      svg.appendChild(obj);
+      output.src = 'data:image/svg+xml,' + encodeURIComponent(new XMLSerializer().serializeToString(svg));
+      output.onload = function() {
+        var canvas = document.createElement('CANVAS');
+        canvas.setAttribute('height', img.naturalHeight);
+        canvas.setAttribute('width', img.naturalHeight * (WIDTH / HEIGHT));
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(output, 0, 0);
+        canvas.toBlob(function(blob) {
+          var outputImg = document.getElementById('output');
+          var url = URL.createObjectURL(blob);
+          outputImg.src = url;
+        });
+      };
+    };
+  };
+  document.getElementById('picker').onchange = function(event) {
+    if (event.target.files.length > 0) {
+      update(event.target.files[0]);
+    }
+  };
+  document.getElementById('text').oninput = function() {
+    if (document.getElementById('picker').files.length > 0) {
+      update(document.getElementById('picker').files[0]);
+    }
+  };
+</script>
